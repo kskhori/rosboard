@@ -1,92 +1,131 @@
-# rosboard
+# ROSboard 
 
+ROS node that runs a web server on your robot.
+Run the node, point your web browser at http://your-robot-ip:8888/ and you get nice visualizations.
 
+**ROS1/ROS2 compatible.** This package will work in either ROS version.
 
-## Getting started
+**Mobile friendly.** Designed so you can walk around next to your robot with a phone while viewing ROS topics.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+**Light weight.** Doesn't depending on much. Consumes extremely little resources when it's not actually being used.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+**Easily extensible.** Easily code a visualization for a custom type by only adding only one .js file [here](https://github.com/dheera/rosboard/tree/main/rosboard/html/js/viewers) and referncing it inside the top of [index.js](https://github.com/dheera/rosboard/blob/main/rosboard/html/js/index.js).
 
-## Add your files
+You can run it on your desktop too and play a ROS bag.
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+Also be sure to check out my terminal visualization tool, [ROSshow](https://github.com/dheera/rosshow/).
+
+![screenshot](/screenshots/screenshot5.jpg?raw=true "screenshot")
+
+## Prerequisites
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.cds.tohoku.ac.jp/horippy/rosboard.git
-git branch -M main
-git push -uf origin main
+sudo pip3 install tornado
+sudo pip3 install simplejpeg  # recommended, but ROSboard can fall back to cv2 or PIL instead
 ```
 
-## Integrate with your tools
+If you intend to use this with melodic or earlier, you also need `rospkg` to allow python3 ROS1 nodes to work.
+```
+sudo pip3 install rospkg      # required for melodic and earlier distros
+```
 
-- [ ] [Set up project integrations](https://gitlab.cds.tohoku.ac.jp/horippy/rosboard/-/settings/integrations)
+## Running it the easy way (without installing it into a workspace)
 
-## Collaborate with your team
+```
+source /opt/ros/YOUR_ROS1_OR_ROS2_DISTRO/setup.bash
+./run
+```
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+Point your web browser at http://localhost:8888 (or replace localhost with your robot's IP) and you're good to go.
 
-## Test and Deploy
+## Installing it as a ROS package
 
-Use the built-in continuous integration in GitLab.
+This ROS package should work in either ROS1 or ROS2. Simply drop it into your `catkin_ws/src/` or `colcon_ws/src/` and it should just work.
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+For ROS 1, run it with `rosrun rosboard rosboard_node` or put it in your launch file.
 
-***
+For ROS 2, run it with `ros2 run rosboard rosboard_node` or put it in your launch file.
 
-# Editing this README
+## FAQ
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
+**How do I write a visualizer for a custom type?**
 
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+Just add a new viewer class that inherits from Viewer, following the examples of the [default viewers](https://github.com/dheera/rosboard/tree/master/rosboard/html/js/viewers). Then add it to the imports at the top of [index.js](https://github.com/dheera/rosboard/blob/master/rosboard/html/js/index.js) and you're done.
 
-## Name
-Choose a self-explaining name for your project.
+**How does this work in both ROS1 and ROS2?**
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+I make use of [rospy2](https://github.com/dheera/rospy2), a shim library I wrote that behaves like ROS1's `rospy` but speaks ROS2 to the system, communicating with `rclpy` in the background. This allows using the same ros node code for both ROS1 and ROS2, and only needs slight differences in the package metadata files (`package.xml` and `CMakeLists.txt`, hence the configure scripts). It does mean that everything is written in ROS1 style, but it ensures compatibility with both ROS1 and ROS2 without having to maintain multiple branches or repos.
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+**Why don't you use rosbridge-suite or Robot Web Tools?**
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+They are a great project, I initially used it, but moved away from it in favor of a custom Tornado-based websocket bridge, for a few reasons:
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+* It's less easy to be ROS1 and ROS2 compatible when depending on these libraries. The advantage of doing my own websocket implementation in Tornado is that the custom websocket API speaks exactly the same language regardless of whether the back-end is ROS1 or ROS2.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+* Custom implementation allows me to use lossy compression on large messages (e.g. Image or PointCloud2) before sending it over the websocket, robot-side timestamps on all messages, and possibly throttling in the future.
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+* I don't want the browser to have "superuser" access to the ROS system, only have the functionality necessary for this to work.
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+* I also want to add a basic username/password authorization at some point in the future.
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+* Many times in the past, the robot web tools are not available immediately on apt-get when ROS distros are released, and one has to wait months. This depends on only some standard Python libraries like `tornado` and optionally `PIL` and does not depend on any distro-specific ROS packages, so it should theoretically work immediately when new ROS distros are released.
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+## Credits
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+This project makes use of a number of open-source libraries which the author is extremely grateful of.
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+- [Tornado](https://www.tornadoweb.org/): Used as a web server and web socket server.
+  Copyright (C) The Tornado Authors
+  Apache 2.0 License
 
-## License
-For open source projects, say how it is licensed.
+- [simplejpeg](https://gitlab.com/jfolz/simplejpeg): Used for encoding and decoding JPEG format.
+  Copyright (C) Joachim Folz
+  MIT License
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+- [psutil](https://github.com/giampaolo/psutil) - Used for monitoring system resource utilization.
+  Copyright (C) Giampaolo Rodola
+  BSD 3-clause license
+ 
+- [Masonry](https://masonry.desandro.com/): Used for laying out cards on the page.
+  Copyright (C) David DeSandro
+  MIT License
+ 
+- [Leaflet.js](https://github.com/Leaflet/Leaflet): Used for rendering sensor_msgs/NavSatFix messages.
+  Copyright (C) Vladimir Agafonkin
+  CloudMade, BSD 2-clause license
+
+- [Material Design Lite](https://getmdl.io/) - Used for general UI theming and widgets of the web-based client.
+  Copyright (C) Google, Inc.
+  Apache 2.0 License
+
+- [jQuery](https://jquery.com/) - Used for client-side DOM manipulation.
+  Copyright (C) OpenJS Foundation
+  MIT License
+
+- [litegl.js](https://github.com/jagenjo/litegl.js?files=1) - Used as a wrapper for the WebGL API for 3D visualizations.
+  Copyright (C) Evan Wallace, Javi Agenjo
+  MIT License
+
+- [glMatrix](https://github.com/toji/gl-matrix) - For Matrix manipulations for 3D visualizations.
+  Copyright (C) Brandon Jones, Colin MacKenzie IV.
+  MIT License
+
+- [rosbag.js](https://github.com/cruise-automation/rosbag.js/) - Used for reading ROS 1 .bag files.
+  Copyright (C) Cruise Automation
+  MIT License
+
+- [uPlot](https://github.com/leeoniya/uPlot) - Used for all time-series plots.
+  Copyright (C) Leon Sorokin
+  MIT License
+
+- [JSON5](https://github.com/json5/json5) - Used for encoding/decoding JSON5 messages.
+  Copyright (C) Aseem Kishore, and others.
+  MIT License
+
+- [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) - Used for all fixed-width text in the web UI.
+  Copyright (C) The JetBrains Mono Project Authors
+  SIL Open Font License 1.1
+
+- [Titillium Web](https://fonts.google.com/specimen/Titillium+Web) - Used for all variable-width text in the web UI.
+  Copyright (C) Accademia di Belle Arti di Urbino and students of MA course of Visual design
+  SIL Open Font License 1.1
